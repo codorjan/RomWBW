@@ -558,6 +558,8 @@ unit. Register pair DE contains the line characteristics upon return.
 |       C: Serial Device Attributes
 |       D: Serial Device Type
 |       E: Serial Device Number
+|       H: Serial Device Unit Mode
+|       L: Serial Device Unit I/O Base Address
 
 Reports information about the character device unit specified. Register C
 indicates the device attributes: 0=RS-232 and 1=Terminal. Register D
@@ -745,6 +747,8 @@ of memory.
 |       C: Attributes
 |       D: Device Type
 |       E: Device Number
+|       H: Disk Device Unit Mode
+|       L: Disk Device Unit I/O Base Address
 
 Reports information about the character device unit specified. Register D
 indicates the device type (driver) and register E indicates the physical
@@ -954,7 +958,7 @@ Documentation required...
 
 Documentation required...
 
-### Function 0x28 -- RTC DEVICE (DIODEVICE)
+### Function 0x28 -- RTC DEVICE (RTCDEVICE)
 
 | _Entry Parameters_
 |       B: 0x28
@@ -964,6 +968,8 @@ Documentation required...
 |       A: Status (0=OK, else error)
 |       D: Device Type
 |       E: Device Number
+|       H: RTC Device Unit Mode
+|       L: RTC Device Unit I/O Base Address
 
 Reports information about the RTC device unit specified. Register D
 indicates the device type (driver) and register E indicates the physical
@@ -1136,8 +1142,10 @@ Keyboard should be flushed.
 
 | _Exit Results_
 |       A: Status (0=OK, else error)
-|       D=Device Type
-|       E=Device Number
+|       D: Device Type
+|       E: Device Number
+|       H: VDA Device Unit Mode
+|       L: VDA Device Unit I/O Base Address
 
 Reports information about the video device unit specified.
 
@@ -1429,25 +1437,31 @@ Increase by steps of 48 to select the same note in next octave.
 If the driver is able to generate the requested note, a success (0) is
 returned, otherwise a non-zero error state will be returned.
 
+The sound chip resolution and its oscillator limit the range and
+accuracy of the notes played. The typically range of the AY-3-8910
+is six octaves, Bb2/A#2-A7, where each value is a unique tone. Values
+above and below can still be played but each quarter tone step may not 
+result in a note change.
+
 The following table shows the mapping of the input value in HL
 to the corresponding octave and note.
 
-| Note  | Octave 0 | Octave 1 | Octave 2 | Octave 3 | Octave 4 | Octave 5 | Octave 6 |
-|-------|----------|----------|----------|----------|----------|----------|----------|
-| Bb/A# | 0        | 48       | 96       | 144      | 192      | 240      | 288      |
-| B     | 4        | 52       | 100      | 148      | 196      | 244      | 292      |
-| C     | 8        | 56       | 104      | 152      | 200      | 248      | 296      |
-| C#/Db | 12       | 60       | 108      | 156      | 204      | 252      | 300      |
-| D     | 16       | 64       | 112      | 160      | 208      | 256      | 304      |
-| Eb/D# | 20       | 68       | 116      | 164      | 212      | 260      | 308      |
-| E     | 24       | 72       | 120      | 168      | 216      | 264      | 312      |
-| F     | 28       | 76       | 124      | 172      | 220      | 268      | 316      |
-| F#/Gb | 32       | 80       | 128      | 176      | 224      | 272      | 320      |
-| G     | 36       | 84       | 132      | 180      | 228      | 276      | 324      |
-| Ab/G# | 40       | 88       | 136      | 184      | 232      | 280      | 328      |
-| A     | 44       | 92       | 140      | 188      | 236      | 284      | 332      |
-
-### Function 0x54 -- Sound Play (SNDPLAY)
+| Note  | Oct 0 | Oct 1 | Oct 2 | Oct 3 | Oct 4 | Oct 5 | Oct 6 | Oct 7 |
+|:----- | -----:| -----:| -----:| -----:| -----:| -----:| -----:| -----:|
+| Bb/A# |   0   |   48  |  96   |  144  |  192  |  240  |  288  |  336  |
+| B     |   4   |   52  |  100  |  148  |  196  |  244  |  292  |  340  |
+| C     |   8   |   56  |  104  |  152  |  200  |  248  |  296  |  344  |
+| C#/Db |   12  |   60  |  108  |  156  |  204  |  252  |  300  |  348  |
+| D     |   16  |   64  |  112  |  160  |  208  |  256  |  304  |  352  |
+| Eb/D# |   20  |   68  |  116  |  164  |  212  |  260  |  308  |  356  |
+| E     |   24  |   72  |  120  |  168  |  216  |  264  |  312  |  360  |
+| F     |   28  |   76  |  124  |  172  |  220  |  268  |  316  |  364  |
+| F#/Gb |   32  |   80  |  128  |  176  |  224  |  272  |  320  |  368  |
+| G     |   36  |   84  |  132  |  180  |  228  |  276  |  324  |  372  |
+| Ab/G# |   40  |   88  |  136  |  184  |  232  |  280  |  328  |  376  |
+| A     |   44  |   92  |  140  |  188  |  236  |  284  |  332  |  380  |
+   
+### Function 0x54 -- Sound Play SNDPLAY)                    
 
 | _Entry Parameters_
 |       B: 0x54
@@ -1529,9 +1543,6 @@ key aspects of the specific Audio Device.
 
 Reports information about the audio device unit specified.
 
-At this stage, only one driver type is supported (SN76489), but is
-envisaged that more will be added in the future.
-
 Register B reports the audio device type (see below).
 
 Registers HL and DE contain relevant port addresses for the hardware
@@ -1543,7 +1554,54 @@ AUDIO ID       | Value | Device     | Returned registers
 -------------- | ----- | ---------- | --------------------------------------------
 SND_SN76489    | 0x01  | SN76489    | E: Left channel port, L: Right channel port
 SND_AY38910    | 0x02  | AY-3-8910  | D: Address port, E: Data port
+SND_BITMODE    | 0x03  | I/O PORT   | D: Address port, E: Bit mask
 
+### Function 0x56 -- Sound Duration (SNDDUR)
+
+| _Entry Parameters_
+|       B: 0x56
+|       C: Audio Device Unit ID
+|       HL: Duration
+
+|      _Returned Values_
+|           A: Status (0=OK, else error)
+
+This function sets the duration of the note to be played in milliseconds.
+
+If the duration is set to zero, then the play function will operate in a non-blocking
+mode. i.e. a tone will start playing and the play function will return. The tone will
+continue to play until the next tone is played. I/O PORT are not compatible and will
+not play a note if the duration is zero.
+
+For other values, when a tone is played, it will play for the duration defined in HL 
+and then return.
+
+### Function 0x57 -- Sound Device (SNDDEVICE)
+
+| _Entry Parameters_
+|       B: 0x57
+|       C: Sound Device Unit Number
+
+| _Exit Results_
+|       A: Status (0=OK, else error)
+|       D: Serial Device Type
+|       E: Serial Device Number
+|       H: Serial Device Unit Mode
+|       L: Serial Device Unit I/O Base Address
+
+Reports information about the sound device unit specified.  Register D
+indicates the device type (driver) and register E indicates the physical
+device number assigned by the driver.
+
+Each character device is handled by an appropriate driver (AY38910, SN76489,
+etc.). The driver can be identified by the Device Type. The assigned Device
+Types are listed below.
+
+_Id_ | _Device Type / Driver_
+---- | ----------------------
+0x00 | SN76489
+0x10 | AY38910
+0x20 | BITMODE
 
 `\clearpage`{=latex}
 
@@ -1751,6 +1809,31 @@ available along with the registers/information returned.
 |           A: Status (0=OK, else error)
 |           E: Count of Serial Device Units
 
+#### SYSGET Subfunction 0x01 -- Get Serial Unit Function (CIOFN)
+
+|      _Entry Parameters_
+|           BC: 0xF801
+|           D: CIO Function
+|           E: Unit
+
+|      _Returned Values_
+|           A: Status (0=OK, else error)
+|           HL: Driver Function Address
+|           DE: Unit Data Address
+
+This function will lookup the actual driver function address and
+unit data address inside the HBIOS driver.  On entry, place the
+CIO function number to lookup in D and the CIO unit number in E.
+On return, HL will contain the address of the requested function
+in the HBIOS driver (in the HBIOS bank).  DE will contain the
+associated unit data address (also in the HBIOS bank).
+
+This function can be used to speed up HBIOS calls by looking up the
+function and data address for a specific driver function.  After this,
+the caller can use interbank calls directly to the function in the
+driver which bypasses the overhead of the normal function invocation
+lookup.
+
 #### SYSGET Subfunction 0x10 -- Get Disk Device Unit Count (DIOCNT)
 
 |      _Entry Parameters_
@@ -1759,6 +1842,31 @@ available along with the registers/information returned.
 |      _Returned Values_
 |           A: Status (0=OK, else error)
 |           E: Count of Disk Device Units
+
+#### SYSGET Subfunction 0x11 -- Get Disk Unit Function (DIOFN)
+
+|      _Entry Parameters_
+|           BC: 0xF811
+|           D: DIO Function
+|           E: Unit
+
+|      _Returned Values_
+|           A: Status (0=OK, else error)
+|           HL: Driver Function Address
+|           DE: Unit Data Address
+
+This function will lookup the actual driver function address and
+unit data address inside the HBIOS driver.  On entry, place the
+DIO function number to lookup in D and the DIO unit number in E.
+On return, HL will contain the address of the requested function
+in the HBIOS driver (in the HBIOS bank).  DE will contain the
+associated unit data address (also in the HBIOS bank).
+
+This function can be used to speed up HBIOS calls by looking up the
+function and data address for a specific driver function.  After this,
+the caller can use interbank calls directly to the function in the
+driver which bypasses the overhead of the normal function invocation
+lookup.
 
 #### SYSGET Subfunction 0x20 -- Get Disk Device Unit Count (RTCCNT)
 
@@ -1778,6 +1886,31 @@ available along with the registers/information returned.
 |           A: Status (0=OK, else error)
 |           E: Count of Video Device Units
 
+#### SYSGET Subfunction 0x41 -- Get Video Unit Function (VDAFN)
+
+|      _Entry Parameters_
+|           BC: 0xF841
+|           D: VDA Function
+|           E: Unit
+
+|      _Returned Values_
+|           A: Status (0=OK, else error)
+|           HL: Driver Function Address
+|           DE: Unit Data Address
+
+This function will lookup the actual driver function address and
+unit data address inside the HBIOS driver.  On entry, place the
+VDA function number to lookup in D and the VDA unit number in E.
+On return, HL will contain the address of the requested function
+in the HBIOS driver (in the HBIOS bank).  DE will contain the
+associated unit data address (also in the HBIOS bank).
+
+This function can be used to speed up HBIOS calls by looking up the
+function and data address for a specific driver function.  After this,
+the caller can use interbank calls directly to the function in the
+driver which bypasses the overhead of the normal function invocation
+lookup.
+
 #### SYSGET Subfunction 0x50 -- Get Sound Device Unit Count (SNDCNT)
 
 |      _Entry Parameters_
@@ -1786,6 +1919,31 @@ available along with the registers/information returned.
 |      _Returned Values_
 |           A: Status (0=OK, else error)
 |           E: Count of Sound Device Units
+
+#### SYSGET Subfunction 0x51 -- Get Sound Unit Function (SNDFN)
+
+|      _Entry Parameters_
+|           BC: 0xF851
+|           D: SND Function
+|           E: Unit
+
+|      _Returned Values_
+|           A: Status (0=OK, else error)
+|           HL: Driver Function Address
+|           DE: Unit Data Address
+
+This function will lookup the actual driver function address and
+unit data address inside the HBIOS driver.  On entry, place the
+SND function number to lookup in D and the SND unit number in E.
+On return, HL will contain the address of the requested function
+in the HBIOS driver (in the HBIOS bank).  DE will contain the
+associated unit data address (also in the HBIOS bank).
+
+This function can be used to speed up HBIOS calls by looking up the
+function and data address for a specific driver function.  After this,
+the caller can use interbank calls directly to the function in the
+driver which bypasses the overhead of the normal function invocation
+lookup.
 
 #### SYSGET Subfunction 0xD0 -- Get Timer Tick Count (TIMER)
 
