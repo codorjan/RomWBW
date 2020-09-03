@@ -270,9 +270,9 @@ _LDX	LD	C,16			; CPM Close File function
 	CALL	BDOS			; Do it
 ;
 	; Play loop
-	CALL	CRLF2			; Formatting
-	LD	DE,MSGPLY		; Playing message
-	CALL	PRTSTR			; Print message
+;	CALL	CRLF2			; Formatting
+;	LD	DE,MSGPLY		; Playing message
+;	CALL	PRTSTR			; Print message
 	;CALL	CRLF2			; Formatting
 	;CALL	SLOWCPU
 	LD	A,(FILTYP)		; Get file type
@@ -295,7 +295,29 @@ GOPT3	LD	A,0			; SETUP value to PT3 sound files
 	LD	DE,185			; Avg TS / quark = 7400, so 185 delay loops
 	JR	GOPTX			; Play PTx file
 
-GOPTX	LD	HL,(QDLY)		; Get basic quark delay
+GOPTX
+	CALL	CRLF2
+	LD	DE, MSGSONGNAME         ; Print song name message
+	CALL	PRTSTR
+	LD	DE, MDLADDR + $1E       ; Print 32 character long song name from module
+	LD	B, $20
+GOPTX1	LD	A,(DE)
+	CALL	PRTCHR
+	INC	DE
+	DJNZ	GOPTX1
+	CALL	CRLF
+	LD	DE, MSGARTIST           ; Print "by" message
+	CALL	PRTSTR
+	LD	DE, MDLADDR + $42       ; Print 32 character long composer/artist from module
+	LD	B,  $20
+GOPTX2	LD	A,(DE)
+	CALL	PRTCHR
+	INC	DE
+	DJNZ	GOPTX2
+	CALL	CRLF2			; Formatting
+	LD	DE,MSGPLY		; Playing message
+	CALL	PRTSTR			; Print message
+	LD	HL,(QDLY)		; Get basic quark delay
 	OR	A			; Clear carry
 	SBC	HL,DE			; Adjust for file type
 	LD	(QDLY),HL		; Save updated quark delay factor
@@ -313,7 +335,11 @@ PTXLP	CALL	START+5			; Play one quark
 	CALL	WAITQ			; Wait one quark period
 	JR	PTXLP			; Loop for next quark
 ;
-gomym	ld	hl,(QDLY)		; Get basic quark delay
+gomym
+	CALL	CRLF2			; Formatting
+	LD	DE,MSGPLY		; Playing message
+	CALL	PRTSTR			; Print message
+	ld	hl,(QDLY)		; Get basic quark delay
 	or	a			; Clear carry
 	ld	de,125			; Avg TS / quark = ~5000, so 125 delay loops
 	sbc	hl,de			; Adjust for file type
@@ -537,10 +563,16 @@ CFGTBL:	;	PLT	RSEL	RDAT	RIN	Z180	ACR
 	.DB	$07,	$D8,	$D0,	$D8,	$FF,	$FF	; RCZ80 W/ RC SOUND MODULE (EB)
 	.DW	HWSTR_RCEB
 ;
+	.DB	$07,	$A0,	$A1,	$A2,	$FF,	$FF	; RCZ80 W/ RC SOUND MODULE (EB Rev 6)
+	.DW	HWSTR_RCEB
+;
 	.DB	$07,	$D1,	$D0,	$D0,	$FF,	$FF	; RCZ80 W/ RC SOUND MODULE (MF)
 	.DW	HWSTR_RCMF
 ;
 	.DB	$08,	$68,	$60,	$68,	$C0,	$FF	; RCZ180 W/ RC SOUND MODULE (EB)
+	.DW	HWSTR_RCEB
+;
+	.DB	$08,	$A0,	$A1,	$A2,	$C0,	$FF	; RCZ180 W/ RC SOUND MODULE (EB Rev 6)
 	.DW	HWSTR_RCEB
 ;
 	.DB	$08,	$61,	$60,	$60,	$C0,	$FF	; RCZ180 W/ RC SOUND MODULE (MF)
@@ -608,7 +640,10 @@ HWSTR_N8	.DB	"N8 Onboard Sound",0
 HWSTR_RCEB	.DB	"RC2014 Sound Module (EB)",0
 HWSTR_RCMF	.DB	"RC2014 Sound Module (MF)",0
 
-MSGUNSUP	.db	"MYM FILES NOT SUPPORTED YET\r\n", 0
+MSGUNSUP	.db	"MYM files not supported yet!\r\n", 0
+
+MSGSONGNAME     .DB     "Song name: ", 0
+MSGARTIST       .DB     "by:        ", 0
 ;
 ;===============================================================================
 ; PTx Player Routines
